@@ -24,7 +24,7 @@ from .store import Store
 
 ROOT = Path.cwd()
 ISTANBUL = timezone(timedelta(hours=3))
-DEFAULT_START = date(2025, 1, 1)
+DEFAULT_START = date(2026, 1, 1)
 
 
 def istanbul_now() -> datetime:
@@ -43,9 +43,13 @@ def business_days(start: date, end: date):
         d += timedelta(days=1)
 
 
-def ingest(store: Store, days, fetch: Callable[[date], bytes] = fetch_xml) -> dict[str, int]:
+def ingest(store: Store, days, fetch: Callable[[date], bytes] = fetch_xml, max_consecutive_failures: int = 5) -> dict[str, int]:
     stats = {"loaded": 0, "no_bulletin": 0, "failed": 0, "skipped": 0, "rows": 0}
+    consecutive_failures = 0
     for d in days:
+        if consecutive_failures >= max_consecutive_failures:
+            print(f"stopping after {consecutive_failures} failures in a row; the remaining days are retried next run")
+            break
         if store.settled(d):
             stats["skipped"] += 1
             continue
@@ -53,14 +57,20 @@ def ingest(store: Store, days, fetch: Callable[[date], bytes] = fetch_xml) -> di
             rates = parse_bulletin(fetch(d))
             n = store.upsert(rates)
             store.log(d, "loaded", n)
+            print(f"  {d} loaded {n} rates", flush=True)
             stats["loaded"] += 1
             stats["rows"] += n
+            consecutive_failures = 0
         except NoBulletin:
             store.log(d, "no_bulletin")
+            print(f"  {d} no bulletin (holiday)", flush=True)
             stats["no_bulletin"] += 1
+            consecutive_failures = 0
         except Exception as e:  # keep going; failed days are retried on the next run
             store.log(d, "failed", message=str(e)[:300])
+            print(f"  {d} FAILED: {e}", flush=True)
             stats["failed"] += 1
+            consecutive_failures += 1
     return stats
 
 

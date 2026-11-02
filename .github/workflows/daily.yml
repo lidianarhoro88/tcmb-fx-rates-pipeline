@@ -16,6 +16,7 @@ concurrency: fx-pipeline
 jobs:
   ingest:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -23,6 +24,8 @@ jobs:
           python-version: "3.12"
       - run: pip install -e ".[dev]"
       - run: pytest -q
+      - name: Check the CBRT site is reachable
+        run: curl -sS -m 20 -o /dev/null -w "HTTP %{http_code} in %{time_total}s\n" https://www.tcmb.gov.tr/kurlar/today.xml || echo "::warning::CBRT site not reachable from this runner"
       - name: Backfill (manual runs only)
         if: ${{ github.event.inputs.backfill_from != '' && github.event.inputs.backfill_from != null }}
         run: fx-pipeline backfill --start "${{ github.event.inputs.backfill_from }}"

@@ -47,7 +47,7 @@ def url_for(d: date, today: date | None = None) -> str:
     return f"{BASE}/{d:%Y%m}/{d:%d%m%Y}.xml"
 
 
-def fetch_xml(d: date, retries: int = 3, timeout: int = 20) -> bytes:
+def fetch_xml(d: date, retries: int = 2, timeout: int = 15) -> bytes:
     """Download the bulletin for date d. Raises NoBulletin on 404, retries transient errors."""
     req = urllib.request.Request(url_for(d), headers={"User-Agent": "tcmb-fx-rates-pipeline/1.0 (+github.com/lidianarhoro88)"})
     for attempt in range(1, retries + 1):

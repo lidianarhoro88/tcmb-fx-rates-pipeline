@@ -112,3 +112,10 @@ def test_state_survives_via_csv(store, tmp_path):
     assert fresh.con.execute("select count(*) from fx_rates").fetchone()[0] == 15
     assert fresh.last_attempted_date() == date(2026, 10, 30)
     assert ingest(fresh, [date(2026, 10, 29)], fetch=fake_fetch)["skipped"] == 1   # holiday remembered
+
+
+def test_stops_after_repeated_failures(store):
+    def down(d):
+        raise TimeoutError("site unreachable")
+    stats = ingest(store, list(business_days(date(2026, 10, 1), date(2026, 10, 30))), fetch=down, max_consecutive_failures=3)
+    assert stats["failed"] == 3 and stats["loaded"] == 0
