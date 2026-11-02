@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TRY Exchange Rates · CBRT Pipeline</title>
+<meta name="description" content="Daily CBRT (TCMB) indicative exchange rates against the Turkish lira, refreshed automatically by a scheduled data pipeline.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#F6F1EA;--card:#FFFCF7;--card2:#F9F4EC;--ink:#2A1A20;--muted:#6E5A61;--wine:#5C2E3E;--gold:#9A7633;--gold2:#C7A46A;--line:rgba(92,46,62,.14);--up:#A3333D;--down:#2F7D5B;color-scheme:light}
+@media (prefers-color-scheme:dark){:root{--bg:#171013;--card:#221820;--card2:#2A1E26;--ink:#F4EAE3;--muted:#B5A3A9;--wine:#D49AAE;--gold:#D9B977;--gold2:#E6CC92;--line:rgba(244,234,227,.11);--up:#F2A1A8;--down:#7CCBA2;color-scheme:dark}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 "Plus Jakarta Sans",system-ui,sans-serif}
+.wrap{max-width:1180px;margin:0 auto;padding:28px 20px 60px}
+.eyebrow{font:500 .7rem "JetBrains Mono",monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+h1{font:500 clamp(1.8rem,3.5vw,2.6rem)/1.1 Fraunces,Georgia,serif;margin:6px 0}h1 em{color:var(--wine);font-weight:400}
+h2{font:500 1.2rem Fraunces,Georgia,serif;margin:0}.muted{color:var(--muted)}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin:22px 0 16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px 18px}
+.ccy{display:flex;justify-content:space-between;align-items:baseline}.ccy b{font:500 2rem Fraunces,Georgia,serif}
+.chg{display:flex;gap:14px;font-size:.82rem;margin-top:6px}.chg span{color:var(--muted)}
+.up{color:var(--up)}.down{color:var(--down)}
+.row{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:16px;margin-bottom:16px}@media(max-width:900px){.row{grid-template-columns:1fr}}
+.head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.seg{display:inline-flex;gap:2px;padding:3px;border:1px solid var(--line);border-radius:99px;background:var(--card2)}
+.seg button{border:0;background:none;padding:6px 12px;border-radius:99px;font:600 .82rem "Plus Jakarta Sans",sans-serif;color:var(--muted);cursor:pointer}
+.seg button[aria-pressed=true]{background:var(--wine);color:var(--bg)}
+.chart{position:relative;height:320px}
+table{width:100%;border-collapse:collapse;font-size:.86rem}th{font:500 .64rem "JetBrains Mono",monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);text-align:right;padding:7px;border-bottom:1px solid var(--line)}
+td{text-align:right;padding:8px 7px;border-bottom:1px solid var(--line)}th:first-child,td:first-child{text-align:left}
+.status li{margin:6px 0}.pill{font:600 .72rem "Plus Jakarta Sans",sans-serif;padding:3px 9px;border-radius:99px;background:var(--card2);border:1px solid var(--line)}
+.empty{padding:60px 20px;text-align:center}
+footer{margin-top:22px;font-size:.82rem;color:var(--muted);display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}footer a{color:var(--wine)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="eyebrow">Data pipeline · CBRT indicative rates · refreshed every business day</div>
+  <h1>The lira, <em>one bulletin at a time.</em></h1>
+  <div class="muted" id="meta">Loading…</div>
+  <div id="app"></div>
+  <footer><span>Source: Central Bank of the Republic of Türkiye (TCMB) daily indicative rates, forex selling, TRY per 1 unit. Not investment advice.</span>
+    <a href="https://github.com/lidianarhoro88/tcmb-fx-rates-pipeline">Pipeline source on GitHub</a></footer>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+(async () => {
+  const app = document.getElementById('app'), meta = document.getElementById('meta');
+  let D;
+  try { D = await (await fetch('data.json', { cache: 'no-store' })).json(); } catch { D = null; }
+  if (!D || !D.latest || !D.latest.length) {
+    meta.textContent = '';
+    app.innerHTML = '<div class="card empty"><h2>Waiting for the first pipeline run</h2><p class="muted">The scheduled GitHub Action fills this page after its first successful run.</p></div>';
+    return;
+  }
+  const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  const pct = v => v == null ? '—' : (v > 0 ? '+' : '') + (v * 100).toFixed(2) + '%';
+  const cls = v => v == null ? '' : v > 0 ? 'up' : v < 0 ? 'down' : '';
+  const fmt = (v, d = 4) => v == null ? '—' : v.toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
+  const day = s => new Date(s + 'T00:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+  meta.textContent = `Bulletin of ${day(D.latest_date)} · ${D.bulletins} bulletins stored · updated ${D.generated_at} Istanbul time`;
+
+  const core = D.latest.slice(0, 3);
+  app.innerHTML = `
+  <section class="cards">${core.map(c => `
+    <div class="card"><div class="ccy"><span class="eyebrow">${c.currency}/TRY</span><span class="muted" style="font-size:.8rem">${c.name}</span></div>
+      <b style="font:500 2rem Fraunces,Georgia,serif">${fmt(c.forex_selling / c.unit)}</b>
+      <div class="chg"><span>1 day <b class="${cls(c.chg_1d)}">${pct(c.chg_1d)}</b></span><span>30 days <b class="${cls(c.chg_30d)}">${pct(c.chg_30d)}</b></span><span>YTD <b class="${cls(c.chg_ytd)}">${pct(c.chg_ytd)}</b></span></div>
+    </div>`).join('')}</section>
+  <section class="row">
+    <div class="card"><div class="head"><h2>TRY per unit</h2>
+      <div class="seg" id="seg">${['USD', 'EUR', 'GBP'].map((c, i) => `<button aria-pressed="${i === 0}" data-c="${c}">${c}</button>`).join('')}</div></div>
+      <div class="chart"><canvas id="ch" aria-label="Exchange rate history"></canvas></div>
+      <p class="muted" style="font-size:.8rem;margin:10px 0 0">A rising line means a weaker lira. Gaps are weekends and public holidays, when no bulletin is published.</p></div>
+    <div class="card"><h2>Pipeline status</h2>
+      <ul class="status" style="padding-left:18px">
+        <li>Latest bulletin: <b>${day(D.latest_date)}</b></li>
+        <li><b>${D.bulletins}</b> bulletins · <b>${D.rows.toLocaleString()}</b> rate rows stored</li>
+        <li><b>${D.holidays_seen}</b> business day${D.holidays_seen === 1 ? '' : 's'} without a bulletin (public holidays), remembered and never re-fetched</li>
+        <li><b>${D.failed_days}</b> failed day${D.failed_days === 1 ? '' : 's'} waiting for retry</li>
+        <li>Quality checks: ${D.quality_problems.length ? `<span class="up">${D.quality_problems.length} flagged</span><br><span class="muted" style="font-size:.8rem">${D.quality_problems.slice(0, 3).join('<br>')}</span>` : '<span class="pill">all passed</span>'}</li>
+      </ul>
+      <p class="muted" style="font-size:.8rem">Checks: selling ≥ buying, rates positive, USD/EUR/GBP present every day, no move above 15% between bulletins.</p></div>
+  </section>
+  <section class="card"><div class="head"><h2>All currencies in the latest bulletin</h2><span class="muted">TRY, forex and banknote rates</span></div>
+    <div style="overflow-x:auto"><table><thead><tr><th>Currency</th><th>Unit</th><th>Forex buying</th><th>Forex selling</th><th>Banknote buying</th><th>Banknote selling</th><th>1 day</th><th>30 days</th><th>YTD</th></tr></thead>
+    <tbody>${D.latest.map(c => `<tr><td><b>${c.currency}</b> <span class="muted">${c.name}</span></td><td>${c.unit}</td><td>${fmt(c.forex_buying)}</td><td>${fmt(c.forex_selling)}</td><td>${fmt(c.banknote_buying)}</td><td>${fmt(c.banknote_selling)}</td>
+      <td class="${cls(c.chg_1d)}">${pct(c.chg_1d)}</td><td class="${cls(c.chg_30d)}">${pct(c.chg_30d)}</td><td class="${cls(c.chg_ytd)}">${pct(c.chg_ytd)}</td></tr>`).join('')}</tbody></table></div>
+  </section>`;
+
+  Chart.defaults.font.family = '"Plus Jakarta Sans", system-ui, sans-serif'; Chart.defaults.color = css('--muted'); Chart.defaults.borderColor = css('--line');
+  const ch = new Chart(document.getElementById('ch'), { type: 'line', data: { datasets: [] },
+    options: { maintainAspectRatio: false, parsing: false, interaction: { mode: 'nearest', axis: 'x', intersect: false },
+      plugins: { legend: { display: false }, tooltip: { callbacks: { title: i => day(new Date(i[0].parsed.x).toISOString().slice(0, 10)), label: i => `${fmt(i.parsed.y)} TRY` } } },
+      scales: { x: { type: 'linear', ticks: { callback: v => new Date(v).toLocaleDateString('en-GB', { month: 'short', year: '2-digit' }), maxTicksLimit: 8 } } } } });
+  const show = c => {
+    ch.data.datasets = [{ data: D.series[c].map(([d, v]) => ({ x: Date.parse(d + 'T00:00:00'), y: v })), borderColor: css('--wine'), backgroundColor: css('--wine'), pointRadius: 0, borderWidth: 2, tension: .15 }];
+    ch.update();
+    document.querySelectorAll('#seg button').forEach(b => b.setAttribute('aria-pressed', b.dataset.c === c));
+  };
+  document.querySelectorAll('#seg button').forEach(b => b.addEventListener('click', () => show(b.dataset.c)));
+  show('USD');
+})();
+</script>
+</body>
+</html>

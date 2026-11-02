@@ -1,0 +1,5 @@
+*.duckdb
+*.duckdb.wal
+__pycache__/
+.pytest_cache/
+*.egg-info/

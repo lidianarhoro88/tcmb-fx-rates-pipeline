@@ -1,0 +1,41 @@
+name: Daily CBRT rates
+on:
+  schedule:
+    - cron: "5 13 * * 1-5"      # 16:05 Istanbul, after the ~15:30 bulletin
+  workflow_dispatch:
+    inputs:
+      backfill_from:
+        description: "Optional: backfill from this date (YYYY-MM-DD)"
+        required: false
+  push:
+    branches: [main]
+    paths: ["src/**", ".github/workflows/daily.yml"]
+permissions:
+  contents: write
+concurrency: fx-pipeline
+jobs:
+  ingest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -e ".[dev]"
+      - run: pytest -q
+      - name: Backfill (manual runs only)
+        if: ${{ github.event.inputs.backfill_from != '' && github.event.inputs.backfill_from != null }}
+        run: fx-pipeline backfill --start "${{ github.event.inputs.backfill_from }}"
+      - name: Incremental load
+        run: fx-pipeline daily
+      - name: Export
+        run: fx-pipeline export
+      - name: Quality checks (reported, not blocking)
+        run: fx-pipeline check || echo "::warning::data quality checks flagged rows, see docs/data.json"
+      - name: Commit refreshed data
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/fx_rates.csv data/ingestion_log.csv docs/data.json
+          git diff --cached --quiet || git commit -m "data: CBRT bulletins up to $(jq -r .latest_date docs/data.json)"
+          git push

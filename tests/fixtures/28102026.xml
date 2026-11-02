@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="isokur.xsl"?>
+<Tarih_Date Tarih="28.10.2026" Date="10/28/2026"  Bulten_No="2026/202" >
+<Currency CrossOrder="0" Kod="USD" CurrencyCode="USD">
+		<Unit>1</Unit>
+		<Isim>ABD DOLARI</Isim>
+		<CurrencyName>US DOLLAR</CurrencyName>
+		<ForexBuying>40.1</ForexBuying>
+		<ForexSelling>40.18</ForexSelling>
+		<BanknoteBuying>40.07</BanknoteBuying>
+		<BanknoteSelling>40.22</BanknoteSelling>
+		<CrossRateUSD/>
+		<CrossRateOther/>
+</Currency>
+<Currency CrossOrder="3" Kod="EUR" CurrencyCode="EUR">
+		<Unit>1</Unit>
+		<Isim>EURO</Isim>
+		<CurrencyName>EURO</CurrencyName>
+		<ForexBuying>44.11000000000001</ForexBuying>
+		<ForexSelling>44.190000000000005</ForexSelling>
+		<BanknoteBuying>44.080000000000005</BanknoteBuying>
+		<BanknoteSelling>44.230000000000004</BanknoteSelling>
+		<CrossRateUSD/>
+		<CrossRateOther/>
+</Currency>
+<Currency CrossOrder="4" Kod="GBP" CurrencyCode="GBP">
+		<Unit>1</Unit>
+		<Isim>INGILIZ STERLINI</Isim>
+		<CurrencyName>POUND STERLING</CurrencyName>
+		<ForexBuying>52.13</ForexBuying>
+		<ForexSelling>52.230000000000004</ForexSelling>
+		<BanknoteBuying>52.080000000000005</BanknoteBuying>
+		<BanknoteSelling>52.28</BanknoteSelling>
+		<CrossRateUSD/>
+		<CrossRateOther/>
+</Currency>
+<Currency CrossOrder="11" Kod="JPY" CurrencyCode="JPY">
+		<Unit>100</Unit>
+		<Isim>JAPON YENI</Isim>
+		<CurrencyName>JAPANESE YEN</CurrencyName>
+		<ForexBuying>26.466</ForexBuying>
+		<ForexSelling>26.666500000000003</ForexSelling>
+		<BanknoteBuying>26.065</BanknoteBuying>
+		<BanknoteSelling>26.867</BanknoteSelling>
+		<CrossRateUSD/>
+		<CrossRateOther/>
+</Currency>
+<Currency CrossOrder="21" Kod="XDR" CurrencyCode="XDR">
+		<Unit>1</Unit>
+		<Isim>OZEL CEKME HAKKI (SDR)</Isim>
+		<CurrencyName>SPECIAL DRAWING RIGHT (SDR)</CurrencyName>
+		<ForexBuying>54.937000000000005</ForexBuying>
+		<ForexSelling/>
+		<BanknoteBuying/>
+		<BanknoteSelling/>
+		<CrossRateUSD/>
+		<CrossRateOther/>
+</Currency>
+</Tarih_Date>
